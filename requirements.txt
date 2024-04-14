@@ -1,11 +1,11 @@
-numpy>=1.18.5
-pandas>=1.0.5
-seaborn
-matplotlib
-scikit-learn==1.0.2
-imblearn
-streamlit
-opendatasets
 ipykernel
+opendatasets
+streamlit
+imblearn
+scikit-learn
+matplotlib
+seaborn
+pandas
+numpy
 
 -e .
