@@ -161,3 +161,4 @@ cython_debug/
 
 hrenv/
 project_logs/
+config/kaggle.json
