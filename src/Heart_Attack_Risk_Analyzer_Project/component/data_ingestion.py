@@ -7,8 +7,6 @@ import pandas as pd
 import numpy as np
 from src.Heart_Attack_Risk_Analyzer_Project.utils.utils import unzip_file
 from dotenv import load_dotenv
-from src.Heart_Attack_Risk_Analyzer_Project.config.config import Config
-from src.Heart_Attack_Risk_Analyzer_Project.constant import *
 from src.Heart_Attack_Risk_Analyzer_Project.entity.artifact_entity import DataIngestionArtifact
 
 load_dotenv()
@@ -38,15 +36,18 @@ class DataIngestion:
             
             os.makedirs(zip_data_dir, exist_ok=True)
 
-            logging.info(f"Downloading file from :[{dowload_url}] into :[{zip_data_dir}]")
             try:
+                logging.info("Dataset source authentication in progress...")
                 api = KaggleApi()
                 api.authenticate()
+                logging.info("Dataset source authentication completed.")
             except Exception as e:
                 raise HeartRiskException(e, sys)
             
             try:
+                logging.info(f"Downloading dataset from : [{dowload_url}] into : [{zip_data_dir}]")
                 api.dataset_download_files(dowload_url, path=zip_data_dir)
+                logging.info(f"Download completed successfully. File available at : [{zip_data_dir}]")
             except Exception as e:
                 raise HeartRiskException(e, sys)
             return zip_data_dir
@@ -67,7 +68,9 @@ class DataIngestion:
             zip_file_path = os.path.join(self.data_ingestion_config.zip_data_dir,
                                          self.data_ingestion_config.zip_file_name)
             try:
+                logging.info(f"Extracting the dataset zip file from : [{zip_file_path}] into : [{self.data_ingestion_config.raw_data_dir}]")
                 unzip_file(zip_file_path=zip_file_path, extract_to=self.data_ingestion_config.raw_data_dir)
+                logging.info(f"Extraction complete. Extracted data available at : [{self.data_ingestion_config.raw_data_dir}]")
             except Exception as e:
                 raise HeartRiskException(e, sys)
             
@@ -90,6 +93,7 @@ class DataIngestion:
 
             split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
+            logging.info("Spliting the dataset into train and test.")
             for train_index, test_index in split.split(heart_data_frame.drop(['TenYearCHD'], axis=1), heart_data_frame['TenYearCHD']):
                 strat_train_set = heart_data_frame.loc[train_index]
                 strat_test_set = heart_data_frame.loc[test_index]
@@ -99,6 +103,7 @@ class DataIngestion:
             test_file_path = os.path.join(self.data_ingestion_config.ingested_test_dir,
                                           file_name)
             
+            logging.info(f"Splitting completed. Datasets are available at train : [{train_file_path}] and test : [{test_file_path}]")
             if strat_train_set is not None:
                 os.makedirs(self.data_ingestion_config.ingested_train_dir, exist_ok=True)
                 strat_train_set.to_csv(train_file_path, index=False)
@@ -111,6 +116,7 @@ class DataIngestion:
                                                             test_file_path=test_file_path,
                                                             is_ingested=True,
                                                             message="Data Ingestion completed successfully")
+            logging.info(f"DataIngestionArtifact generated : [{data_ingestion_artifact}]")
             return data_ingestion_artifact
         except Exception as e:
             raise HeartRiskException(e, sys)

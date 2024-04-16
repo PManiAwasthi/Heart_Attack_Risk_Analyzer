@@ -162,3 +162,4 @@ cython_debug/
 hrenv/
 project_logs/
 config/kaggle.json
+/src/Heart_Attack_Risk_Analyzer_Project/artifact
