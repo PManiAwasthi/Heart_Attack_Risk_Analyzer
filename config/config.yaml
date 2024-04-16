@@ -1,6 +1,12 @@
+training_pipeline_config:
+  pipeline_name: heart_risk_analyzer
+  artifact_dir: artifact
+
 data_ingestion_config:
-dataset_url : "dileep070/heart-disease-prediction-using-logistic-regression"
-raw_data_dir : raw_data
-ingested_dir : ingested_data
-ingested_train_dir : train
-ingested_test_dir : test
+  dataset_url : "dileep070/heart-disease-prediction-using-logistic-regression"
+  zip_data_dir : "zip_data_dir"
+  zip_file_name : "heart-disease-prediction-using-logistic-regression.zip"
+  raw_data_dir : raw_data
+  ingested_dir : ingested_data
+  ingested_train_dir : train
+  ingested_test_dir : test
