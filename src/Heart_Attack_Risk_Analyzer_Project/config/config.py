@@ -3,7 +3,7 @@ from src.Heart_Attack_Risk_Analyzer_Project.exception import HeartRiskException
 import os
 import sys
 from src.Heart_Attack_Risk_Analyzer_Project.constant import *
-from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig
+from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig
 from src.Heart_Attack_Risk_Analyzer_Project.utils.utils import read_yaml_file
 
 class Config:
@@ -54,6 +54,35 @@ class Config:
         except Exception as e:
             raise HeartRiskException(e, sys)
     
+    def get_data_validation_config(self) -> DataValidationConfig:
+        try:
+            artifact_dir = self.training_pipeline_config.artifact_dir
+
+            data_validation_artifact_dir = os.path.join(artifact_dir,
+                                                        DATA_VALIDATION_ARTIFACT_DIR_NAME,
+                                                        self.time_stamp)
+            data_validation_config = self.config_info[DATA_VALIDATION_CONFIG_KEY]
+
+            schema_file_path = os.path.join(ROOT_DIR,
+                                            data_validation_config[DATA_VALIDATION_SCHEMA_DIR_KEY],
+                                            data_validation_config[DATA_VALIDATION_SCHEMA_FILE_NAME_KEY])
+            
+            report_file_path = os.path.join(data_validation_artifact_dir,
+                                            data_validation_config[DATA_VALIDATION_REPORT_FILE_NAME_KEY])
+            
+            report_page_file_path = os.path.join(data_validation_artifact_dir,
+                                                 data_validation_config[DATA_VALIDATION_REPORT_PAGE_FILE_NAME_KEY])
+            
+            data_validation_config = DataValidationConfig(
+                schema_file_path=schema_file_path,
+                report_file_path=report_file_path,
+                report_page_file_path=report_page_file_path
+            )
+            logging.info(f"Data Validation config : [{data_validation_config}]")
+            return data_validation_config
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+    
     def get_training_pipeline_config(self) -> TrainingPipelineConfig:
         try:
             training_pipeline_config = self.config_info[TRAINING_PIPELINE_CONFIG_KEY]
@@ -66,3 +95,4 @@ class Config:
             return training_pipeline_config
         except Exception as e:
             raise HeartRiskException(e, sys)
+
