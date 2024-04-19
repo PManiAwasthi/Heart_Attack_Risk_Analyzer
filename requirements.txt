@@ -9,4 +9,6 @@ pandas
 numpy
 python-dotenv
 PyYAML
+evidently
+
 -e .

@@ -1,9 +1,10 @@
 from src.Heart_Attack_Risk_Analyzer_Project.logger import logging, get_log_file_name
 from src.Heart_Attack_Risk_Analyzer_Project.exception import HeartRiskException
 import os, sys
-from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig
-from src.Heart_Attack_Risk_Analyzer_Project.entity.artifact_entity import DataIngestionArtifact
+from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, DataValidationConfig
+from src.Heart_Attack_Risk_Analyzer_Project.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
 from src.Heart_Attack_Risk_Analyzer_Project.component.data_ingestion import DataIngestion
+from src.Heart_Attack_Risk_Analyzer_Project.component.data_validation import DataValidation
 from collections import namedtuple
 from threading import Thread
 from src.Heart_Attack_Risk_Analyzer_Project.config.config import Config
@@ -39,6 +40,13 @@ class Pipeline(Thread):
         except Exception as e:
             raise HeartRiskException(e, sys)
 
+    def start_data_validation(self, data_ingestion_artifact:DataIngestionArtifact) -> DataValidationArtifact:
+        try:
+            data_validation = DataValidation(data_validation_config=self.config.get_data_validation_config(), data_ingestion_artifiact=data_ingestion_artifact)
+            return data_validation.initiate_data_validation()
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+
     def run_pipeline(self):
         try:
             if Pipeline.experiment.running_status:
@@ -67,7 +75,11 @@ class Pipeline(Thread):
 
             self.save_experiment()
             data_ingestion_artifact = self.start_data_ingestion()
+            print(data_ingestion_artifact)
+            data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
+            print(data_validation_artifact)
 
+            logging.info(f"Pipeline Completed.")
             stop_time = datetime.now()
 
             Pipeline.experiment = Experiment(experiment_id=Pipeline.experiment.experiment_id,
