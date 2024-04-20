@@ -7,3 +7,7 @@ TrainingPipelineConfig = namedtuple("TrainingPipelineConfig", ["artifact_dir"])
 
 DataValidationConfig = namedtuple("DataValidationConfig",
                                   ["schema_file_path", "report_file_path", "report_page_file_path"])
+
+DataTransformationConfig = namedtuple("DataTransformationConfig",
+                                      ["preprocessed_object_file_path", "transformed_train_dir", "transformed_test_dir",
+                                       "convert_features_to_object", "change_feature_male_to_gender"])

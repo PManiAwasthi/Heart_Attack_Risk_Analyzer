@@ -10,5 +10,6 @@ numpy
 python-dotenv
 PyYAML
 evidently
+dill
 
 -e .

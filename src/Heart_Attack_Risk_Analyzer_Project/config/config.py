@@ -3,7 +3,7 @@ from src.Heart_Attack_Risk_Analyzer_Project.exception import HeartRiskException
 import os
 import sys
 from src.Heart_Attack_Risk_Analyzer_Project.constant import *
-from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig
+from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig, DataTransformationConfig
 from src.Heart_Attack_Risk_Analyzer_Project.utils.utils import read_yaml_file
 
 class Config:
@@ -80,6 +80,42 @@ class Config:
             )
             logging.info(f"Data Validation config : [{data_validation_config}]")
             return data_validation_config
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+    
+    def get_data_transformation_config(self):
+        try:
+            artifact_dir = self.training_pipeline_config.artifact_dir
+
+            data_transformation_artifact_dir = os.path.join(artifact_dir,
+                                                            DATA_TRANSFORMATION_ARTIFACT_DIR,
+                                                            self.time_stamp)
+            
+            data_transformation_config_info = self.config_info[DATA_TRANSFORMATION_CONFIG_KEY]
+
+            convert_features_to_object = data_transformation_config_info[DATA_TRANSFORMATION_CONVERT_FEATURES_TO_OBJECTS]
+
+            preprocessed_object_file_path = os.path.join(data_transformation_artifact_dir,
+                                                         data_transformation_config_info[DATA_TRANSFORMATION_PREPROCESSING_DIR_KEY],
+                                                         data_transformation_config_info[DATA_TRANSFORMATION_PREPROCESSING_OBJECT_FILE_NAME_KEY])
+            transformed_train_dir = os.path.join(data_transformation_artifact_dir,
+                                                 data_transformation_config_info[DATA_TRANSFORMATION_DIR_KEY],
+                                                 data_transformation_config_info[DATA_TRANSFORMATION_TRAIN_DIR_KEY])
+            
+            transformed_test_dir = os.path.join(data_transformation_artifact_dir,
+                                                data_transformation_config_info[DATA_TRANSFORMATION_DIR_KEY],
+                                                data_transformation_config_info[DATA_TRANSFORMATION_TEST_DIR_KEY])
+            
+            change_feature_male_to_gender = data_transformation_config_info[DATA_TRANSFORMATION_CHANGE_FEATURE_NAME_TO_GENDER_KEY]
+
+            data_transformation_config = DataTransformationConfig(preprocessed_object_file_path=preprocessed_object_file_path,
+                                                                  transformed_train_dir=transformed_train_dir,
+                                                                  transformed_test_dir=transformed_test_dir,
+                                                                  convert_features_to_object=convert_features_to_object,
+                                                                  change_feature_male_to_gender=change_feature_male_to_gender)
+            logging.info(f"Data Transformation Config: {data_transformation_config}")
+            return data_transformation_config
+
         except Exception as e:
             raise HeartRiskException(e, sys)
     
