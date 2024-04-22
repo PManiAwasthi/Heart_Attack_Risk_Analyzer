@@ -1,10 +1,11 @@
 from src.Heart_Attack_Risk_Analyzer_Project.logger import logging, get_log_file_name
 from src.Heart_Attack_Risk_Analyzer_Project.exception import HeartRiskException
 import os, sys
-from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, DataValidationConfig
-from src.Heart_Attack_Risk_Analyzer_Project.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact
+from src.Heart_Attack_Risk_Analyzer_Project.entity.config_entity import DataIngestionConfig, DataValidationConfig, DataTransformationConfig
+from src.Heart_Attack_Risk_Analyzer_Project.entity.artifact_entity import DataIngestionArtifact, DataValidationArtifact, DataTransformationArtifact
 from src.Heart_Attack_Risk_Analyzer_Project.component.data_ingestion import DataIngestion
 from src.Heart_Attack_Risk_Analyzer_Project.component.data_validation import DataValidation
+from src.Heart_Attack_Risk_Analyzer_Project.component.data_transformation import DataTransformation
 from collections import namedtuple
 from threading import Thread
 from src.Heart_Attack_Risk_Analyzer_Project.config.config import Config
@@ -46,6 +47,16 @@ class Pipeline(Thread):
             return data_validation.initiate_data_validation()
         except Exception as e:
             raise HeartRiskException(e, sys)
+    
+    def start_data_transformation(self, data_ingestion_artifact: DataIngestionArtifact,
+                                  data_validation_artifact: DataValidationArtifact) -> DataTransformationArtifact:
+        try:
+            data_transformation = DataTransformation(data_ingestion_artifact=data_ingestion_artifact,
+                                                     data_validation_artifact=data_validation_artifact,
+                                                     data_transformation_config=self.config.get_data_transformation_config())
+            return data_transformation.initiate_data_transformation()
+        except Exception as e:
+            raise HeartRiskException(e, sys)
 
     def run_pipeline(self):
         try:
@@ -78,7 +89,10 @@ class Pipeline(Thread):
             print(data_ingestion_artifact)
             data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
             print(data_validation_artifact)
-
+            data_transformation_artifact = self.start_data_transformation(data_ingestion_artifact=data_ingestion_artifact,
+                                                                          data_validation_artifact=data_validation_artifact)
+            print(data_transformation_artifact)
+            
             logging.info(f"Pipeline Completed.")
             stop_time = datetime.now()
 

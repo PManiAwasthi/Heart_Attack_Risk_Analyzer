@@ -6,7 +6,8 @@ import os,sys
 import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
-from sklearn.impute import KNNImputer
+from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from imblearn.over_sampling import SMOTE, ADASYN
 from sklearn.compose import ColumnTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -15,9 +16,9 @@ from src.Heart_Attack_Risk_Analyzer_Project.constant import DATA_VALIDATION_GET_
 
 
 class ReSampling(BaseEstimator, TransformerMixin):
-    def __init__(self):
+    def __init__(self, TenYearCHD=15):
         try:
-            pass
+            self.TenYearCHD = TenYearCHD
         except Exception as e:
             raise HeartRiskException(e, sys)
     
@@ -29,7 +30,10 @@ class ReSampling(BaseEstimator, TransformerMixin):
             smote_obj = SMOTE()
             adasyn_obj = ADASYN()
 
-            X, y = smote_obj.fit_resample(X.drop(column=["TenYearCHD"], axis=1), X["TenYearCHD"])
+            y = X[:, self.TenYearCHD]
+            X = np.delete(X, self.TenYearCHD, axis=1)
+
+            X, y = smote_obj.fit_resample(X, y)
             X, y = adasyn_obj.fit_resample(X, y)
             generated_data = np.c_[X, y]
             return generated_data
@@ -57,19 +61,26 @@ class DataTransformation:
             categorical_columns = dataset_schema[DATA_VALIDATION_GET_CATEGORICAL_COLUMN_KEY]
 
             column_list = numerical_columns + categorical_columns
-
+            column_list.append(dataset_schema[DATA_VALIDATION_GET_TARGET_COLUMN_KEY])
             # pipeline = Pipeline(steps=[
             #     ('imputer', KNNImputer(n_neighbors=5)),
             #     ('upsampling', SMOTE()),
             #     ('downsampling', ADASYN())
             # ])
-            pipeline = Pipeline(steps=[
+
+            num_pipeline = Pipeline(steps=[
                 ("imputer", KNNImputer(n_neighbors=5)),
-                ('resampling', ReSampling())
+                ('scaler', StandardScaler())
+            ])
+
+            cat_pipeline = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy="most_frequent")),
+                ('one_hot_encoder', OneHotEncoder())
             ])
 
             preprocessing = ColumnTransformer([
-                ('complete_pipeline', pipeline, column_list)
+                ('cat_pipeline', cat_pipeline, categorical_columns),
+                ('num_pipeline', num_pipeline, numerical_columns)
             ])
 
             return preprocessing
@@ -95,19 +106,16 @@ class DataTransformation:
 
             target_column_name = schema[DATA_VALIDATION_GET_TARGET_COLUMN_KEY]
 
-            logging.info(f"Splitting input and target feature from training and testing dataframe.")
-            input_feature_train_df = train_df.drop(columns=[target_column_name], axis=1)
-            target_feature_train_df = train_df[target_column_name]
-
-            input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
-            target_feature_test_df = test_df[target_column_name]
-
             logging.info(f"Applying preprocessing object on traing dataframe and testing dataframe")
-            input_feature_train_df=preprocessing_obj.fit_transform(input_feature_train_df)
-            input_feature_test_df=preprocessing_obj.fit_transform(input_feature_test_df)
+            input_feature_train_df=preprocessing_obj.fit_transform(train_df)
+            input_feature_test_df=preprocessing_obj.fit_transform(test_df)
 
-            train_arr = np.c_[input_feature_train_df, np.array(target_feature_train_df)]
-            test_arr = np.c_[input_feature_test_df, np.array(target_feature_test_df)]
+            logging.info(f"After preprocessing applying resampling of the data to avoid class imbalance.")
+            re_sampling_obj = ReSampling()
+            input_feature_train_df = re_sampling_obj.fit_transform(input_feature_train_df)
+            input_feature_test_df = re_sampling_obj.fit_transform(input_feature_test_df)
+
+            logging.info(f"Data set up and down sampling completed successfully.")
 
             train_file_name = os.path.basename(train_file_path).replace(".csv", ".npz")
             test_file_name = os.path.basename(test_file_path).replace(".csv", ".npz")
@@ -117,8 +125,8 @@ class DataTransformation:
             transformed_test_file_path = os.path.join(self.data_transformation_config.transformed_test_dir, test_file_name)
 
             logging.info(f"Saving transformed training and testing array.")
-            save_numpy_array_data(file_path=transformed_train_file_path, array=train_arr)
-            save_numpy_array_data(file_path=transformed_test_file_path, array=test_arr)
+            save_numpy_array_data(file_path=transformed_train_file_path, array=input_feature_train_df)
+            save_numpy_array_data(file_path=transformed_test_file_path, array=input_feature_test_df)
 
             preprocessing_obj_file_path = self.data_transformation_config.preprocessed_object_file_path
 
