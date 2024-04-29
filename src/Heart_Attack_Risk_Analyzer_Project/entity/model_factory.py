@@ -59,6 +59,18 @@ class ModelFactory:
             return class_ref
         except Exception as e:
             raise HeartRiskException(e, sys)
+        
+    @staticmethod
+    def update_property_of_class(instance_ref, property_data: dict):
+        try:
+            if not isinstance(property_data, dict):
+                raise Exception("property_data parameter required to dictionary")
+            print(property_data)
+            for key, value in property_data.items():
+                setattr(instance_ref, key, value)
+            return instance_ref
+        except Exception as e:
+            raise HeartRiskException(e, sys)
     
     def get_initialized_model_list(self) -> List[InitializedModelDetail]:
         """
@@ -68,7 +80,12 @@ class ModelFactory:
             initialized_model_list = []
             for model_serial_number in self.models_initialization_config.keys():
                 model_initialization_config = self.models_initialization_config[model_serial_number]
-                model_obj_ref = ModelFactory.class_for_name()
+                model_obj_ref = ModelFactory.class_for_name(module_name=model_initialization_config[MODULE_KEY][CLASS_KEY])
+                model = model_obj_ref()
+
+                if PARAM_KEY in model_initialization_config:
+                    model_obj_property_data = dict(model_initialization_config[PARAM_KEY])
+                    model = ModelFactory.update_property_of_class()
         except Exception as e:
             raise HeartRiskException(e, sys)
     
