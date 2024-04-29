@@ -4,6 +4,8 @@ from src.Heart_Attack_Risk_Analyzer_Project.logger import logging
 from collections import namedtuple
 import yaml
 import os, sys
+from typing import List
+import importlib
 
 GRID_SEARCH_KEY = 'grid_search'
 MODULE_KEY = 'module'
@@ -33,7 +35,7 @@ class ModelFactory:
             self.models_initialization_config: dict = dict(self.config[MODEL_SELCTION_KEY])
             self.initialized_model_list = None
             self.grid_search_best_model_list = None
-            
+
         except Exception as e:
             raise HeartRiskException(e, sys)
     
@@ -43,5 +45,35 @@ class ModelFactory:
             with open(config_path, 'r') as yaml_file:
                 config = yaml.safe_load(yaml_file)
             return config
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+    
+    @staticmethod
+    def class_for_name(module_name, class_name):
+        try:
+            # load the module, will raise an Exception if the module cannot be loaded
+            module = importlib.import_module(module_name)
+            # get the class, will raise an Exception if the class is not found
+            class_ref = getattr(module_name, class_name)
+
+            return class_ref
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+    
+    def get_initialized_model_list(self) -> List[InitializedModelDetail]:
+        """
+        this function is to read the model_config dictionary and return a list of model details.
+        """
+        try:
+            initialized_model_list = []
+            for model_serial_number in self.models_initialization_config.keys():
+                model_initialization_config = self.models_initialization_config[model_serial_number]
+                model_obj_ref = ModelFactory.class_for_name()
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+    
+    def get_best_model(self, X, y, base_accuracy=0.6) -> BestModel:
+        try:
+            initialized_model_list = self.get_initialized_model_list()
         except Exception as e:
             raise HeartRiskException(e, sys)
