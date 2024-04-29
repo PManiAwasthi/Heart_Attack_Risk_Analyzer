@@ -85,7 +85,19 @@ class ModelFactory:
 
                 if PARAM_KEY in model_initialization_config:
                     model_obj_property_data = dict(model_initialization_config[PARAM_KEY])
-                    model = ModelFactory.update_property_of_class()
+                    model = ModelFactory.update_property_of_class(instance_ref=model,
+                                                                  property_data=model_obj_property_data)
+                param_grid_search = model_initialization_config[SEARCH_PARAM_GRID_KEY]
+                model_name = f"{model_initialization_config[MODULE_KEY]}.{model_initialization_config[CLASS_KEY]}"
+
+                model_initialization_config = InitializedModelDetail(model_serial_number=model_serial_number,
+                                                                     model=model,
+                                                                     param_grid_search=param_grid_search,
+                                                                     model_name=model_name)
+                initialized_model_list.append(model_initialization_config)
+            
+            self.initialized_model_list = initialized_model_list
+            return self.initialized_model_list
         except Exception as e:
             raise HeartRiskException(e, sys)
     
