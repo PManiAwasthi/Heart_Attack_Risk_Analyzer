@@ -6,6 +6,7 @@ import yaml
 import os, sys
 from typing import List
 import importlib
+from sklearn.metrics import recall_score
 
 GRID_SEARCH_KEY = 'grid_search'
 MODULE_KEY = 'module'
@@ -188,7 +189,39 @@ class ModelFactory:
             return self.grid_search_best_model_list
         except Exception as e:
             raise HeartRiskException(e, sys)
-    
+        
+    @staticmethod
+    def get_recall_grid_searched_best_model_list(bestModel: GridSearchBestModel, input_features, output_features) -> float:
+        try:
+            best_estimator = bestModel.best_model
+            y_pred = best_estimator.predict(input_features)
+            recall = recall_score(output_features, y_pred)
+            return recall
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+
+    @staticmethod
+    def get_best_model_from_grid_searched_best_model_list(grid_serach_best_model_list: List[GridSearchBestModel], 
+                                                          input_features, output_features, base_accuracy = 1) -> BestModel:
+        try:
+            best_model = None
+            for grid_searched_best_model in grid_serach_best_model_list:
+                recall = ModelFactory.get_recall_grid_searched_best_model_list(grid_searched_best_model, input_features=input_features,
+                                                                               output_features=output_features)
+                accuracy = grid_searched_best_model.best_model.best_score_
+                score = abs(recall-accuracy)
+                if base_accuracy > score:
+                    logging.info(f"Acceptable Model Found: {grid_searched_best_model}")
+                    base_accuracy = score
+                    best_model = grid_searched_best_model
+                if not best_model:
+                    raise Exception(f"None of the Models are acceptable")
+                logging.info(f"Best Model: {best_model}")
+            return best_model
+                
+        except Exception as e:
+            raise HeartRiskException(e, sys)
+        
     def get_best_model(self, X, y, base_accuracy=0.6) -> BestModel:
         try:
             logging.info("Started Initializing model from config file")
